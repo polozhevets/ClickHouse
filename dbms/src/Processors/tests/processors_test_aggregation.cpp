@@ -352,7 +352,6 @@ try
         sink->checkAllRead();
     };
 
-    size_t num_threads = 4;
     std::vector<String> messages;
     std::vector<Int64> times;
 
@@ -375,6 +374,8 @@ try
         messages.emplace_back(msg);
         times.emplace_back(time);
     };
+
+    size_t num_threads = 4;
 
     exec(execute_one_stream, "One stream, single thread", 1, false, false);
     exec(execute_one_stream, "One stream, multiple threads", num_threads, false, false);
