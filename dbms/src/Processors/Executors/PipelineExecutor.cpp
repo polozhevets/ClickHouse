@@ -267,8 +267,10 @@ bool PipelineExecutor::prepareProcessor(UInt64 pid, Stack & stack, bool async)
             tryAddProcessorToStackIfUpdated(edge, stack);
     };
 
-    auto try_release_ownership = [&] ()
+    auto try_release_ownership = [this, pid, &stack] ()
     {
+        /// This function can be called after expand pipeline, where node from outer scope is not longer valid.
+        auto & node = graph[pid];
         ExecStatus expected = ExecStatus::Idle;
         node.status = ExecStatus::Idle;
 
@@ -337,7 +339,8 @@ bool PipelineExecutor::prepareProcessor(UInt64 pid, Stack & stack, bool async)
 
             doExpandPipeline(stack);
 
-            node.need_to_be_prepared = true;
+            /// node is not longer valid after pipeline was expanded
+            graph[pid].need_to_be_prepared = true;
             try_release_ownership();
             break;
         }
@@ -374,46 +377,6 @@ void PipelineExecutor::doExpandPipeline(Stack & stack)
         condvar_to_expand_pipeline.notify_all();
     }
 }
-
-//void PipelineExecutor::assignJobs()
-//{
-//    for (auto * state : execution_states_queue)
-//    {
-//        if (!tryAssignJob(state))
-//        {
-//            while (!task_queue.push(state))
-//                sleep(0);
-//
-//            task_condvar.notify_one();
-//            ++num_task_queue_pushes;
-//        }
-//    }
-//
-//    execution_states_queue.clear();
-//}
-
-//void PipelineExecutor::processPrepareQueue()
-//{
-//    while (!prepare_stack.empty())
-//    {
-//        UInt64 proc = prepare_stack.top();
-//        prepare_stack.pop();
-//
-//        prepareProcessor(proc, false);
-//    }
-//
-//    assignJobs();
-//}
-//
-//void PipelineExecutor::processAsyncQueue()
-//{
-//    UInt64 num_processors = processors.size();
-//    for (UInt64 node = 0; node < num_processors; ++node)
-//        if (graph[node].status == ExecStatus::Async)
-//            prepareProcessor(node, true);
-//
-//    assignJobs();
-//}
 
 void PipelineExecutor::finish()
 {
