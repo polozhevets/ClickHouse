@@ -258,7 +258,7 @@ bool PipelineExecutor::prepareProcessor(UInt64 pid, Stack & stack, bool async)
         node.last_processor_status = status;
     }
 
-    auto add_neighbours_to_prepare_queue = [&, this] ()
+    auto add_neighbours_to_prepare_queue = [&] ()
     {
         for (auto & edge : node.backEdges)
             tryAddProcessorToStackIfUpdated(edge, stack);
@@ -267,17 +267,17 @@ bool PipelineExecutor::prepareProcessor(UInt64 pid, Stack & stack, bool async)
             tryAddProcessorToStackIfUpdated(edge, stack);
     };
 
-    auto try_release_ownership = [this, pid, &stack] ()
+    auto try_release_ownership = [&] ()
     {
         /// This function can be called after expand pipeline, where node from outer scope is not longer valid.
-        auto & node = graph[pid];
+        auto & node_ = graph[pid];
         ExecStatus expected = ExecStatus::Idle;
-        node.status = ExecStatus::Idle;
+        node_.status = ExecStatus::Idle;
 
-        if (node.need_to_be_prepared)
+        if (node_.need_to_be_prepared)
         {
-            while (!node.status.compare_exchange_weak(expected, ExecStatus::Preparing))
-                if (!(expected == ExecStatus::Idle) || !node.need_to_be_prepared)
+            while (!node_.status.compare_exchange_weak(expected, ExecStatus::Preparing))
+                if (!(expected == ExecStatus::Idle) || !node_.need_to_be_prepared)
                     return;
 
             stack.push(pid);
