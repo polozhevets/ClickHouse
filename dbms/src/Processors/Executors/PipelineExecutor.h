@@ -16,7 +16,7 @@ namespace DB
 class PipelineExecutor
 {
 private:
-    Processors processors;
+    Processors & processors;
 
     struct Edge
     {
@@ -114,7 +114,7 @@ private:
     size_t num_waiting_threads_to_expand_pipeline = 0;
 
 public:
-    explicit PipelineExecutor(Processors processors);
+    explicit PipelineExecutor(Processors & processors);
     void execute(size_t num_threads);
 
     String getName() const { return "PipelineExecutor"; }
