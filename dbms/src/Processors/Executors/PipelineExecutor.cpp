@@ -603,14 +603,18 @@ void PipelineExecutor::executeImpl(size_t num_threads)
     );
 
     executor_contexts.reserve(num_threads);
-    auto thread_group = CurrentThread::getGroup();
 
     for (size_t i = 0; i < num_threads; ++i)
     {
         executor_contexts.emplace_back(std::make_unique<ExecutorContext>());
         auto * executor_context = executor_contexts.back().get();
         executor_context->is_waiting = false;
+    }
 
+    auto thread_group = CurrentThread::getGroup();
+
+    for (size_t i = 0; i < num_threads; ++i)
+    {
         pool.schedule([this, thread_group, thread_num = i, num_threads]
         {
             ThreadStatus thread_status;
