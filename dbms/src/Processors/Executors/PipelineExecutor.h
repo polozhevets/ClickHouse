@@ -151,7 +151,8 @@ private:
     std::atomic<size_t> num_waiting_threads;
 
     /// Things to stop execution to expand pipeline.
-    std::atomic<size_t> num_preparing_threads;
+    std::atomic<size_t> num_processing_started;
+    std::atomic<size_t> num_processing_finished;
     std::atomic<ExecutionState *> node_to_expand;
     std::mutex mutex_to_expand_pipeline;
     std::condition_variable condvar_to_expand_pipeline;

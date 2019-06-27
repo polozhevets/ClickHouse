@@ -35,7 +35,8 @@ PipelineExecutor::PipelineExecutor(Processors & processors)
     , cancelled(false)
     , finished(false)
     , num_waiting_threads(0)
-    , num_preparing_threads(0)
+    , num_processing_started(0)
+    , num_processing_finished(0)
     , node_to_expand(nullptr)
 {
     buildGraph();
@@ -356,7 +357,8 @@ void PipelineExecutor::doExpandPipeline(Stack & stack)
 
     condvar_to_expand_pipeline.wait(lock, [&]()
     {
-        return num_waiting_threads_to_expand_pipeline == num_preparing_threads || node_to_expand == nullptr;
+        return num_processing_finished + num_waiting_threads_to_expand_pipeline == num_processing_started
+            || node_to_expand == nullptr;
     });
 
     --num_waiting_threads_to_expand_pipeline;
@@ -494,13 +496,11 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t num_threads
             Stopwatch processing_time_watch;
 
             /// Try to execute neighbour processor.
+            Stack stack;
+            do
             {
-                /// std::unique_lock lock(main_executor_mutex);
-
-                Stack stack;
-
-                ++num_preparing_threads;
-                if (node_to_expand)
+                ++num_processing_started;
+                while (node_to_expand)
                     doExpandPipeline(stack);
 
                 /// Execute again if can.
@@ -508,40 +508,39 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t num_threads
                     state = nullptr;
 
                 /// Process all neighbours. Children will be on the top of stack, then parents.
+                while (!state && !stack.empty() && !finished)
+                {
+                    auto current_processor = stack.top();
+                    stack.pop();
+
+                    if (prepare_processor(current_processor, stack))
+                        state = graph[current_processor].execution_state.get();
+                }
+
+                bool do_wake_up_threads = !stack.empty();
+
                 while (!stack.empty() && !finished)
                 {
-                    while (!state && !stack.empty() && !finished)
-                    {
-                        auto current_processor = stack.top();
-                        stack.pop();
+                    auto cur_state = graph[stack.top()].execution_state.get();
+                    stack.pop();
 
-                        if (prepare_processor(current_processor, stack))
-                            state = graph[current_processor].execution_state.get();
-                    }
-
-                    bool wake_up_threads = !stack.empty();
-
-                    while (!stack.empty() && !finished)
-                    {
-                        auto cur_state = graph[stack.top()].execution_state.get();
-                        stack.pop();
-
-                        ++num_task_queue_pushes;
-                        while (!task_queue.push(cur_state));
-                    }
-
-                    if (wake_up_threads)
-                    {
-                        for (auto & context : executor_contexts)
-                            if (context->is_waiting)
-                                context->condvar.notify_one();
-                    }
-
-                    if (node_to_expand)
-                        doExpandPipeline(stack);
+                    ++num_task_queue_pushes;
+                    while (!task_queue.push(cur_state));
                 }
-                --num_preparing_threads;
+
+                if (do_wake_up_threads)
+                {
+                    for (auto & context : executor_contexts)
+                        if (context->is_waiting)
+                            context->condvar.notify_one();
+                }
+
+                ++num_processing_finished;
+
+                while (node_to_expand)
+                    doExpandPipeline(stack);
             }
+            while (!stack.empty() && !finished);
 
             processing_time_ns += processing_time_watch.elapsed();
 
