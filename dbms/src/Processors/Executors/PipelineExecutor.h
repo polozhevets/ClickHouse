@@ -108,8 +108,8 @@ private:
         }
 
         Node(Node && other) noexcept
-            : processor(other.processor), status(ExecStatus::New)
-            , need_to_be_prepared(false), execution_state(std::move(other.execution_state))
+            : processor(other.processor), status(other.status.load())
+            , need_to_be_prepared(other.need_to_be_prepared.load()), execution_state(std::move(other.execution_state))
         {
         }
     };
