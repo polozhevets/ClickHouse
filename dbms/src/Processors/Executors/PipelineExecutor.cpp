@@ -536,7 +536,7 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t)
                 finish();
 
             executor_contexts[thread_num]->is_waiting = true;
-            executor_contexts[thread_num]->condvar.wait(lock, [&]()
+            executor_contexts[thread_num]->condvar.wait_for(lock, std::chrono::microseconds(1), [&]()
             {
                 return finished || threads_and_tasks_counter.getNumTasks();
             });
