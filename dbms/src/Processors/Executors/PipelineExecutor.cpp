@@ -30,7 +30,7 @@ static bool checkCanAddAdditionalInfoToException(const DB::Exception & exception
 
 PipelineExecutor::PipelineExecutor(Processors & processors)
     : processors(processors)
-    , task_queue(0)
+    , task_queue(min_task_queue_size)
     , num_tasks_and_active_threads(0)
     , cancelled(false)
     , finished(false)
