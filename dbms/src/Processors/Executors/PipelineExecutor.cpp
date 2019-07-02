@@ -326,10 +326,10 @@ bool PipelineExecutor::prepareProcessor(UInt64 pid, Stack & stack, size_t thread
         }
         case IProcessor::Status::ExpandPipeline:
         {
-            executor_contexts[thread_number]->task_list.emplace_back(ExpandPipelineTask {
-                .node_to_expand = node.execution_state.get(),
-                .stack = &stack
-            });
+            executor_contexts[thread_number]->task_list.emplace_back(
+                node.execution_state.get(),
+                &stack
+            );
 
             ExpandPipelineTask * desired = &executor_contexts[thread_number]->task_list.back();
             ExpandPipelineTask * expected = nullptr;

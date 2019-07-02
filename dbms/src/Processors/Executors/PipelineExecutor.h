@@ -147,6 +147,9 @@ private:
         size_t num_waiting_threads = 0;
         std::mutex mutex;
         std::condition_variable condvar;
+
+        ExpandPipelineTask(ExecutionState * node_to_expand_, Stack * stack_)
+            : node_to_expand(node_to_expand_), stack(stack_) {}
     };
 
     std::atomic<size_t> num_processing_executors;
