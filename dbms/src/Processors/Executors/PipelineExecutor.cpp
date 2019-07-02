@@ -30,6 +30,7 @@ static bool checkCanAddAdditionalInfoToException(const DB::Exception & exception
 
 PipelineExecutor::PipelineExecutor(Processors & processors)
     : processors(processors)
+    , task_queue(0)
     , num_tasks_and_active_threads(0)
     , cancelled(false)
     , finished(false)
@@ -369,8 +370,8 @@ void PipelineExecutor::doExpandPipeline(ExpandPipelineTask * task)
 
         if (graph.size() > task_queue_reserved_size)
         {
-            task_queue.reserve(graph.size() - task_queue_reserved_size);
             task_queue_reserved_size = graph.size();
+            task_queue.reserve(graph.size());
         }
 
         expand_pipeline_task = nullptr;
