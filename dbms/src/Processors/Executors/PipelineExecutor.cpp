@@ -24,17 +24,16 @@ namespace LF
 {
 
 /// A function level attribute to disable ThreadSanitizer instrumentation.
-/// Copied from gtest-port.h
-#if defined(__clang__)
+#if defined(__has_feature)
 # if __has_feature(thread_sanitizer)
 #  define NO_SANITIZE_THREAD \
-       __attribute__((no_sanitize_thread))
+       __attribute__((no_sanitize("thread")))
 # else
 #  define NO_SANITIZE_THREAD
-# endif  // __has_feature(thread_sanitizer)
+# endif
 #else
 # define NO_SANITIZE_THREAD
-#endif  // __clang__
+#endif
 
 template <typename Container, typename T>
 NO_SANITIZE_THREAD
