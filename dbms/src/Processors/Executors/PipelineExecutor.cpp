@@ -406,7 +406,7 @@ void PipelineExecutor::doExpandPipeline(ExpandPipelineTask * task)
 
     task->condvar.wait(lock, [&]()
     {
-        return task->num_waiting_threads == num_processing_executors || expand_pipeline_task != task;
+        return task->num_waiting_threads >= num_processing_executors || expand_pipeline_task != task;
     });
 
     /// After condvar.wait() task may point to trash. Can change it only if it is still in expand_pipeline_task.
