@@ -36,29 +36,25 @@ namespace LF
 #endif
 
 template <typename Container, typename T>
-NO_SANITIZE_THREAD
-bool push(Container & container, const T & value)
+bool NO_SANITIZE_THREAD push(Container & container, const T & value)
 {
     return container.push(value);
 }
 
 template <typename Container, typename T>
-NO_SANITIZE_THREAD
-bool pop(Container & container, T & value)
+bool NO_SANITIZE_THREAD pop(Container & container, T & value)
 {
     return container.pop(value);
 }
 
 template <typename Container, typename T>
-NO_SANITIZE_THREAD
-void reserve(Container & container, T size)
+void NO_SANITIZE_THREAD reserve(Container & container, T size)
 {
     container.reserve(size);
 }
 
 template <typename Container, typename T>
-NO_SANITIZE_THREAD
-void reserve_unsafe(Container & container, T size)
+void NO_SANITIZE_THREAD reserve_unsafe(Container & container, T size)
 {
     container.reserve_unsafe(size);
 }
