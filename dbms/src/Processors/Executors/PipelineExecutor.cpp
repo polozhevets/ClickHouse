@@ -20,47 +20,6 @@ namespace ErrorCodes
     extern const int QUERY_WAS_CANCELLED;
 }
 
-namespace LF
-{
-
-/// A function level attribute to disable ThreadSanitizer instrumentation.
-#if defined(__has_feature)
-# if __has_feature(thread_sanitizer)
-#  define NO_SANITIZE_THREAD \
-       __attribute__((no_sanitize("thread")))
-# else
-#  define NO_SANITIZE_THREAD
-# endif
-#else
-# define NO_SANITIZE_THREAD
-#endif
-
-template <typename Container, typename T>
-bool NO_SANITIZE_THREAD push(Container & container, const T & value)
-{
-    return container.push(value);
-}
-
-template <typename Container, typename T>
-bool NO_SANITIZE_THREAD pop(Container & container, T & value)
-{
-    return container.pop(value);
-}
-
-template <typename Container, typename T>
-void NO_SANITIZE_THREAD reserve(Container & container, T size)
-{
-    container.reserve(size);
-}
-
-template <typename Container, typename T>
-void NO_SANITIZE_THREAD reserve_unsafe(Container & container, T size)
-{
-    container.reserve_unsafe(size);
-}
-
-}
-
 static bool checkCanAddAdditionalInfoToException(const DB::Exception & exception)
 {
     /// Don't add additional info to limits and quota exceptions, and in case of kill query (to pass tests).
@@ -71,7 +30,6 @@ static bool checkCanAddAdditionalInfoToException(const DB::Exception & exception
 
 PipelineExecutor::PipelineExecutor(Processors & processors)
     : processors(processors)
-    , task_queue(0)
     , num_tasks_and_active_threads(0)
     , cancelled(false)
     , finished(false)
@@ -412,7 +370,7 @@ void PipelineExecutor::doExpandPipeline(ExpandPipelineTask * task)
         if (graph.size() > task_queue_reserved_size)
         {
             task_queue_reserved_size = graph.size();
-            LF::reserve(task_queue, graph.size());
+            task_queue.reserve(graph.size());
         }
 
         expand_pipeline_task = nullptr;
@@ -557,7 +515,7 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t)
 
             while (threads_and_tasks_counter.getNumTasks())
             {
-                if (LF::pop(task_queue, state))
+                if (task_queue.pop(state))
                 {
                     threads_and_tasks_counter.removeTask();
                     break;
@@ -626,7 +584,7 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t)
                     stack.pop();
 
                     threads_and_tasks_counter.addTask();
-                    while (!LF::push(task_queue, cur_state));
+                    while (!task_queue.push(cur_state));
                 }
 
                 if (do_wake_up_threads)
@@ -675,7 +633,7 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t)
 void PipelineExecutor::executeImpl(size_t num_threads)
 {
     task_queue_reserved_size = std::max<size_t>(min_task_queue_size, graph.size());
-    LF::reserve_unsafe(task_queue, task_queue_reserved_size);
+    task_queue.reserve_unsafe(task_queue_reserved_size);
 
     Stack stack;
 
@@ -690,7 +648,7 @@ void PipelineExecutor::executeImpl(size_t num_threads)
 
         auto cur_state = graph[proc].execution_state.get();
         threads_and_tasks_counter.addTask();
-        while (!LF::push(task_queue, cur_state));
+        while (!task_queue.push(cur_state));
     }
 
     ThreadPool pool(num_threads);
