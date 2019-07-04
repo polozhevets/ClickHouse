@@ -3,3 +3,5 @@
 # https://stackoverflow.com/questions/53996201/boost-lock-free-queue-is-triggering-clangs-thread-sanitizer
 race:DB::PipelineExecutor::TaskQueue::push
 race:DB::PipelineExecutor::TaskQueue::pop
+race:dbms/src/Processors/Executors/PipelineExecutorTaskQueue.cpp
+race:../dbms/src/Processors/Executors/PipelineExecutorTaskQueue.cpp
