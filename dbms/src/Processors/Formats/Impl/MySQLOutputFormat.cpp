@@ -14,7 +14,7 @@ namespace DB
 using namespace MySQLProtocol;
 
 
-MySQLOutputFormat::MySQLOutputFormat(WriteBuffer & out_, const Block & header, Context & context, const FormatSettings & settings)
+MySQLOutputFormat::MySQLOutputFormat(WriteBuffer & out_, const Block & header, const Context & context, const FormatSettings & settings)
     : IOutputFormat(header, out_)
     , context(context)
     , packet_sender(std::make_shared<PacketSender>(out, context.sequence_id))

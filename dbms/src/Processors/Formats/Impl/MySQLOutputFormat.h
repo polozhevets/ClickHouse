@@ -19,7 +19,7 @@ class Context;
 class MySQLOutputFormat: public IOutputFormat
 {
 public:
-    MySQLOutputFormat(WriteBuffer & out_, const Block & header, Context & context, const FormatSettings & settings);
+    MySQLOutputFormat(WriteBuffer & out_, const Block & header, const Context & context, const FormatSettings & settings);
 
     String getName() const override { return "MySQLOutputFormat"; }
 
@@ -30,7 +30,7 @@ private:
 
     bool initialized = false;
 
-    Context & context;
+    const Context & context;
     std::shared_ptr<MySQLProtocol::PacketSender> packet_sender;
     FormatSettings format_settings;
 };
