@@ -457,7 +457,12 @@ void PipelineExecutor::executeSingleThread(size_t thread_num, size_t num_threads
             ++num_waiting_threads;
 
             if (num_waiting_threads == num_threads)
-                finish();
+            {
+                finished = true;
+                lock.unlock();
+                task_queue_condvar.notify_all();
+                break;
+            }
 
             task_queue_condvar.wait(lock, [&]()
             {
