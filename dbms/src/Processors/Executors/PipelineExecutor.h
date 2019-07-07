@@ -123,7 +123,7 @@ private:
     class TaskQueue
     {
     public:
-        TaskQueue() : container(0) {}
+        // TaskQueue(): container(0) {}
 
         bool push(ExecutionState * value);
         bool pop(ExecutionState *& value);
@@ -132,7 +132,9 @@ private:
         void reserve_unsafe(size_t size);
     private:
 
-        boost::lockfree::stack<ExecutionState *> container;
+        // boost::lockfree::stack<ExecutionState *> container;
+        std::stack<ExecutionState *> container;
+        std::mutex mutex;
     };
 
     /// Queue with pointers to tasks. Each thread will concurrently read from it until finished flag is set.
